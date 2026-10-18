@@ -84,6 +84,7 @@ $success = $_GET['success'] ?? '';
                             <td><?= $event['registered_count'] ?></td>
                             <td>
                                 <div class="actions-cell">
+                                    <a href="view_registrations.php?id=<?= $event['id'] ?>" class="btn btn-primary btn-sm">View</a>
                                     <a href="edit_event.php?id=<?= $event['id'] ?>" class="btn btn-warning btn-sm">Edit</a>
                                     <a href="delete_event.php?id=<?= $event['id'] ?>" class="btn btn-danger btn-sm">Delete</a>
                                 </div>
