@@ -16,21 +16,22 @@ $error = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = trim($_POST['password'] ?? '');
+    // Connect to database FIRST (db.php uses $username/$password for MySQL)
+    require_once __DIR__ . '/../api/db.php';
 
-    if ($username === '' || $password === '') {
+    // Read form values AFTER requiring db.php to avoid variable collision
+    $inputUser = trim($_POST['username'] ?? '');
+    $inputPass = trim($_POST['password'] ?? '');
+
+    if ($inputUser === '' || $inputPass === '') {
         $error = 'Please enter both username and password.';
     } else {
-        // Connect to database
-        require_once __DIR__ . '/../api/db.php';
-
         // Look up admin by username
         $stmt = $pdo->prepare("SELECT * FROM admins WHERE username = ?");
-        $stmt->execute([$username]);
+        $stmt->execute([$inputUser]);
         $admin = $stmt->fetch();
 
-        if ($admin && password_verify($password, $admin['password_hash'])) {
+        if ($admin && password_verify($inputPass, $admin['password_hash'])) {
             // Login successful
             $_SESSION['admin_logged_in'] = true;
             $_SESSION['admin_id'] = $admin['id'];
@@ -173,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" placeholder="Enter admin username" required
-                       value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+                       value="<?= htmlspecialchars($inputUser ?? '') ?>">
             </div>
 
             <div class="form-group">
