@@ -1,0 +1,13 @@
+# Secrets & Local Configurations
+api/config.php
+
+# Operating System Files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE and Editor Cache
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

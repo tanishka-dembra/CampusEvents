@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Campus Event Registration System - Browse campus events, check live seat availability, and register or cancel bookings instantly with passwordless email OTP.">
+    <title>CampusConnect | Campus Event Portal</title>
+    
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Navigation Header -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="#" class="brand-logo">
+                <span class="brand-icon">🎓</span>
+                <span class="brand-text">Campus<span class="gradient-text">Events</span></span>
+            </a>
+            
+            <div class="nav-actions" id="nav-actions">
+                <!-- Logged Out View -->
+                <div id="nav-guest-view" class="nav-auth-group">
+                    <button id="btn-open-login" class="btn btn-primary">
+                        <span class="icon">🔑</span> Student Login / Sign Up
+                    </button>
+                </div>
+
+                <!-- Logged In View -->
+                <div id="nav-user-view" class="nav-auth-group hidden">
+                    <div class="user-greeting">
+                        <span class="avatar-badge">👤</span>
+                        <span id="user-display-name" class="user-name">Student</span>
+                    </div>
+                    <button id="btn-open-my-bookings" class="btn btn-secondary">
+                        <span class="icon">🎟️</span> My Bookings
+                    </button>
+                    <button id="btn-logout" class="btn btn-outline" title="Logout">
+                        <span class="icon">🚪</span> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <span class="hero-badge">🌟 Spring Semester 2026</span>
+                <h1 class="hero-title">Discover, Register & <br><span class="gradient-text">Experience Campus Events</span></h1>
+                <p class="hero-subtitle">
+                    Passwordless OTP authentication, real-time dynamic seat tracking, and instant capacity enforcement.
+                </p>
+
+                <!-- Quick Stats Strip -->
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span id="stat-total-events" class="stat-number">0</span>
+                        <span class="stat-label">Active Events</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span id="stat-open-seats" class="stat-number">0</span>
+                        <span class="stat-label">Seats Available</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number live-pulse">Live</span>
+                        <span class="stat-label">Seat Updates</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters & Search Toolbar -->
+        <section class="toolbar-section">
+            <div class="toolbar-container">
+                <!-- Category Pills -->
+                <div class="category-pills" id="category-pills">
+                    <button class="pill active" data-category="all">All Events</button>
+                    <button class="pill" data-category="Tech">Tech</button>
+                    <button class="pill" data-category="Workshop">Workshops</button>
+                    <button class="pill" data-category="Cultural">Cultural</button>
+                    <button class="pill" data-category="Sports">Sports</button>
+                    <button class="pill" data-category="Career">Career</button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Search events by title or venue..." autocomplete="off">
+                </div>
+            </div>
+        </section>
+
+        <!-- Events Grid Section -->
+        <section class="events-section">
+            <div class="section-header">
+                <h2 class="section-title">Upcoming Campus Events</h2>
+                <span id="events-count-label" class="events-count-badge">Loading events...</span>
+            </div>
+
+            <!-- Event Cards Container (Rendered by JS) -->
+            <div id="events-grid" class="events-grid">
+                <!-- Skeleton Loading Placeholders -->
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+
+            <!-- Empty State (When search has no results) -->
+            <div id="no-events-state" class="empty-state hidden">
+                <div class="empty-icon">🔎</div>
+                <h3>No events found</h3>
+                <p>Try searching for a different keyword or select another category.</p>
+                <button id="btn-reset-filters" class="btn btn-secondary">Reset Filters</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: Passwordless OTP Authentication -->
+    <div id="auth-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span class="card-category">Student Portal</span>
+                    <h2 id="auth-modal-title" class="modal-title">Login / Sign Up</h2>
+                    <p class="modal-subtitle">No passwords needed. Verify via 6-digit Email OTP.</p>
+                </div>
+                <button id="btn-close-auth-modal" class="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Step 1: Request OTP Form -->
+                <form id="request-otp-form" class="auth-step-form">
+                    <div class="form-group">
+                        <label for="auth-email">College Email Address <span class="required">*</span></label>
+                        <input type="email" id="auth-email" placeholder="e.g. tanis@campus.edu" required autocomplete="email">
+                        <small class="form-hint">A 6-digit one-time code will be sent to this email.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="auth-name">Full Name <span class="form-optional">(Required for new sign-ups)</span></label>
+                        <input type="text" id="auth-name" placeholder="e.g. Tanis Sharma" autocomplete="name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="auth-student-id">Student ID / Roll No <span class="form-optional">(Required for new sign-ups)</span></label>
+                        <input type="text" id="auth-student-id" placeholder="e.g. 2024CS099">
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="submit" id="btn-send-otp" class="btn btn-primary w-100">
+                            <span class="btn-text">Send 6-Digit OTP →</span>
+                            <span class="btn-spinner hidden"></span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Step 2: Verify OTP Form -->
+                <form id="verify-otp-form" class="auth-step-form hidden">
+                    <div class="otp-notice">
+                        <span class="icon">📩</span>
+                        <div>
+                            <span>Code sent to: <strong id="otp-target-email"></strong></span>
+                            <br><a href="#" id="link-change-email" class="text-link">Change email</a>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="otp-input">Enter 6-Digit Verification Code <span class="required">*</span></label>
+                        <input type="text" id="otp-input" class="otp-input" maxlength="6" placeholder="• • • • • •" required autocomplete="one-time-code">
+                        <small class="form-hint">Code expires in 5 minutes.</small>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="submit" id="btn-verify-otp" class="btn btn-primary w-100">
+                            <span class="btn-text">Verify &amp; Enter Portal</span>
+                            <span class="btn-spinner hidden"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: My Bookings / Cancellation Portal -->
+    <div id="bookings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="bookings-modal-title">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h2 id="bookings-modal-title" class="modal-title">My Registered Events</h2>
+                    <p class="modal-subtitle">Manage your passes or cancel reservations to release seats for other students.</p>
+                </div>
+                <button id="btn-close-bookings-modal" class="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Bookings List Container -->
+                <div id="bookings-list" class="bookings-list">
+                    <div class="empty-bookings-hint">Loading your registered passes...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <p>&copy; 2026 Campus Event Registration System | Built with PHP, MySQL & Dynamic Vanilla JS</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script src="js/app.js"></script>
+</body>
+</html>
