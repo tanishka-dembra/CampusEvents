@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Campus Event Registration System - Browse campus events, check live seat availability, and register or cancel bookings instantly with passwordless email OTP.">
     <title>CampusConnect | Campus Event Portal</title>
-    
+
     <!-- Google Fonts: Inter & Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
-    
+
     <!-- Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -19,45 +19,44 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-    <!-- Navigation Header -->
-    <header class="navbar">
-        <div class="nav-container">
-            <a href="#" class="brand-logo">
-                <span class="brand-icon">🎓</span>
-                <span class="brand-text">Campus<span class="gradient-text">Events</span></span>
-            </a>
-            
-            <div class="nav-actions" id="nav-actions">
-                <!-- Logged Out View -->
-                <div id="nav-guest-view" class="nav-auth-group">
-                    <button id="btn-open-login" class="btn btn-primary">
-                        <span class="icon">🔑</span> Student Login / Sign Up
-                    </button>
-                </div>
 
-                <!-- Logged In View -->
-                <div id="nav-user-view" class="nav-auth-group hidden">
-                    <div class="user-greeting">
-                        <span class="avatar-badge">👤</span>
-                        <span id="user-display-name" class="user-name">Student</span>
-                    </div>
-                    <button id="btn-open-my-bookings" class="btn btn-secondary">
-                        <span class="icon">🎟️</span> My Bookings
-                    </button>
-                    <button id="btn-logout" class="btn btn-outline" title="Logout">
-                        <span class="icon">🚪</span> Logout
-                    </button>
+<!-- Navigation Header -->
+<header class="navbar">
+    <div class="nav-container">
+        <a href="#" class="brand-logo">
+            <span class="brand-text">Campus<span class="gradient-text">Events</span></span>
+        </a>
+
+        <div class="nav-actions" id="nav-actions">
+            <!-- Logged Out View -->
+            <div id="nav-guest-view" class="nav-auth-group">
+                <button id="btn-open-login" class="btn btn-primary">
+                    Student Login / Sign Up
+                </button>
+            </div>
+
+            <!-- Logged In View -->
+            <div id="nav-user-view" class="nav-auth-group hidden">
+                <div class="user-greeting">
+                    <span id="user-display-name" class="user-name">Student</span>
                 </div>
+                <button id="btn-open-my-bookings" class="btn btn-secondary">
+                    My Bookings
+                </button>
+                <button id="btn-logout" class="btn btn-outline" title="Logout">
+                    Logout
+                </button>
             </div>
         </div>
-    </header>
+    </div>
+</header>
 
     <!-- Main Content -->
     <main class="main-content">
         <!-- Hero Section -->
         <section class="hero-section">
             <div class="hero-content">
-                <span class="hero-badge">🌟 Spring Semester 2026</span>
+                <span class="hero-badge">Spring Semester 2026</span>
                 <h1 class="hero-title">Discover, Register & <br><span class="gradient-text">Experience Campus Events</span></h1>
                 <p class="hero-subtitle">
                     Passwordless OTP authentication, real-time dynamic seat tracking, and instant capacity enforcement.
@@ -96,11 +95,12 @@
                     <button class="pill" data-category="Career">Career</button>
                 </div>
 
-                <!-- Search Input -->
-                <div class="search-box">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="search-input" placeholder="Search events by title or venue..." autocomplete="off">
-                </div>
+
+<!-- Search Input -->
+<div class="search-box">
+    <input type="text" id="search-input" placeholder="Search events by title or venue..." autocomplete="off">
+</div>
+
             </div>
         </section>
 
@@ -170,13 +170,14 @@
 
                 <!-- Step 2: Verify OTP Form -->
                 <form id="verify-otp-form" class="auth-step-form hidden">
+
                     <div class="otp-notice">
-                        <span class="icon">📩</span>
                         <div>
                             <span>Code sent to: <strong id="otp-target-email"></strong></span>
                             <br><a href="#" id="link-change-email" class="text-link">Change email</a>
-                        </div>
+                         </div>
                     </div>
+
 
                     <div class="form-group">
 
