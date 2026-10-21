@@ -11,3 +11,6 @@ Desktop.ini
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# Local cookies and sensitive session data
+cookies.txt
