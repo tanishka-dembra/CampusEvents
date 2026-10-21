@@ -4,12 +4,13 @@
 [![Server](https://img.shields.io/badge/Server-XAMPP%20%2F%20Apache-orange?style=for-the-badge)](https://www.apachefriends.org/)
 [![Database](https://img.shields.io/badge/Database-MySQL%20(InnoDB)-00758F?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
 
-A modern, responsive, and secure campus event portal built with **Vanilla HTML, CSS, JavaScript, PHP (PDO), and MySQL (XAMPP)**. The system dynamically computes real-time seat availability, strictly prevents duplicate or over-capacity bookings using atomic database locks, and enforces identity verification through passwordless 6-digit Email OTPs.
+A modern, responsive, and secure campus event portal built with **Vanilla HTML, CSS, JavaScript, PHP (PDO), and MySQL (XAMPP)**. The system dynamically computes real-time seat availability, strictly prevents duplicate or over-capacity bookings using atomic database locks, and enforces identity verification through passwordless 6-digit Email OTPs. Includes a **dedicated Admin Panel** for event management.
 
 ---
 
 ## 🌟 Key Features
 
+### Student Portal
 1. **Live Dynamic Seat Tracking (AJAX / Fetch API):**
    - Remaining seats are calculated on the fly: `remaining_seats = capacity - COUNT(registrations)`.
    - Seat numbers, progress bars, and status badges (🟢 Available, 🟠 Filling Fast, 🔴 Housefull) update instantly with **zero page reloads**.
@@ -30,12 +31,27 @@ A modern, responsive, and secure campus event portal built with **Vanilla HTML, 
    - Real-time search by event title and venue.
    - Category filtering (*Tech, Workshops, Cultural, Sports, Career*).
 
+### Admin Panel
+6. **Secure Admin Login:**
+   - Separate login page (`/admin/login.php`) with session-based authentication.
+   - Passwords stored as bcrypt hashes using PHP's `password_hash()`.
+
+7. **Event Management Dashboard:**
+   - View all events in a table with live registration counts.
+   - **Add** new events with title, category, date, venue, capacity, and description.
+   - **Edit** existing events with pre-filled forms.
+   - **Delete** events with a confirmation page (cascades to registrations).
+
+8. **View Registrations:**
+   - See all registered students for any event (name, student ID, email, registration time).
+   - At-a-glance stats: capacity, registered count, and remaining seats.
+
 ---
 
 ## 🏗️ System Architecture & Database Schema
 
 ```
-WEB DEV PROJECT/
+CampusEvents/
 ├── index.html               # Main event portal & modal dialogs
 ├── css/
 │   └── style.css            # Responsive dark-theme design system
@@ -53,8 +69,19 @@ WEB DEV PROJECT/
 │   ├── register.php         # Atomic registration with row locks
 │   ├── cancel.php           # Secure pass cancellation
 │   └── my_registrations.php # Fetches active student passes
+├── admin/
+│   ├── login.php            # Admin login page (form + auth handler)
+│   ├── auth_check.php       # Session guard for admin pages
+│   ├── logout.php           # Admin session logout
+│   ├── dashboard.php        # Event management table (View/Add/Edit/Delete)
+│   ├── add_event.php        # Add new event form
+│   ├── edit_event.php       # Edit existing event form
+│   ├── delete_event.php     # Delete event with confirmation
+│   ├── view_registrations.php # View registered students per event
+│   └── admin_style.css      # Admin panel dark-theme stylesheet
 └── database/
-    └── schema.sql           # Database schema & sample events
+    ├── schema.sql           # Database schema & sample events
+    └── admin_table.sql      # Admin table schema
 ```
 
 ### Relational Database Schema (`campus_events`):
@@ -62,6 +89,7 @@ WEB DEV PROJECT/
 * **`users`**: `id`, `name`, `student_id (UNIQUE)`, `email (UNIQUE)`.
 * **`email_otps`**: `id`, `email`, `otp_code`, `expires_at`, `is_used`.
 * **`registrations`**: `id`, `event_id`, `user_id`, `registered_at`, `UNIQUE(event_id, user_id)`.
+* **`admins`**: `id`, `username (UNIQUE)`, `password_hash`, `created_at`.
 
 ---
 
@@ -75,11 +103,12 @@ WEB DEV PROJECT/
 2. Open phpMyAdmin: `http://localhost/phpmyadmin`
 3. Click the **SQL** tab.
 4. Copy the contents of `database/schema.sql` and click **Go**.
+5. Then copy the contents of `database/admin_table.sql` and click **Go**.
 
 ### 3. Deploy to Apache
 Link this repository to your Apache `htdocs` directory:
 ```cmd
-mklink /J "C:\xampp\htdocs\campus-events" "path\to\WEB DEV PROJECT"
+mklink /J "C:\xampp\htdocs\campus-events" "path\to\CampusEvents"
 ```
 
 ### 4. Configure Email SMTP (Optional for OTP delivery)
@@ -96,12 +125,24 @@ Open your browser and navigate to:
 http://localhost/campus-events/
 ```
 
+### 6. Access the Admin Panel
+Navigate to:
+```
+http://localhost/campus-events/admin/login.php
+```
+Default admin credentials:
+
+| Username | Password |
+|---|---|
+| `admin` | `admin123` |
+
 ---
 
 ## 🛡️ Security Highlights
 * **SQL Injection Prevention:** 100% parameter-bound queries via PHP PDO (`PDO::ATTR_EMULATE_PREPARES => false`).
 * **XSS Prevention:** Output sanitization on dynamic HTML rendering.
 * **Credential Protection:** Private keys and passwords stored in `api/config.php` and excluded via `.gitignore`.
+* **Admin Passwords:** Stored as bcrypt hashes using PHP's `password_hash()` / `password_verify()`.
 
 ---
 
