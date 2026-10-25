@@ -122,10 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     function renderEvents() {
         const filtered = allEvents.filter(event => {
-            const matchesCategory = (currentCategory === 'all') || 
+            const matchesCategory = (currentCategory === 'all') ||
                 (event.category.toLowerCase() === currentCategory.toLowerCase());
-            
-            const matchesSearch = searchQuery === '' || 
+
+            const matchesSearch = searchQuery === '' ||
                 event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 event.venue.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 event.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -161,50 +161,48 @@ document.addEventListener('DOMContentLoaded', () => {
         const capacity  = event.capacity;
         const percentFilled = Math.min(100, Math.round(((capacity - remaining) / capacity) * 100));
 
-        let badgeClass = 'badge-available';
-        let badgeIcon  = '🟢';
-        let badgeText  = `${remaining} seats left`;
-        let progressClass = 'progress-green';
-        let btnDisabled = '';
-        let btnText     = currentUser ? 'Register Pass →' : 'Login to Register →';
 
-        if (remaining <= 0) {
-            badgeClass = 'badge-full';
-            badgeIcon  = '🔴';
-            badgeText  = 'Housefull';
-            progressClass = 'progress-red';
-            btnDisabled = 'disabled';
-            btnText     = 'Sold Out';
-        } else if (remaining <= 5) {
-            badgeClass = 'badge-warning';
-            badgeIcon  = '🟠';
-            badgeText  = `${remaining} seats left (Filling Fast!)`;
-            progressClass = 'progress-orange';
-        }
+let badgeClass = 'badge-available';
+let badgeText = `${remaining} seats left`;
+let progressClass = 'progress-green';
+let btnDisabled = '';
+let btnText = currentUser ? 'Register Pass →' : 'Login to Register →';
+
+if (remaining <= 0) {
+    badgeClass = 'badge-full';
+    badgeText = 'House Full';
+    progressClass = 'progress-red';
+    btnDisabled = 'disabled';
+    btnText = 'Sold Out';
+} else if (remaining <= 5) {
+    badgeClass = 'badge-warning';
+    badgeText = `${remaining} seats left (Filling Fast!)`;
+    progressClass = 'progress-orange';
+}
 
         return `
-            <article class="event-card" id="event-card-${event.id}">
-                <div class="card-top">
-                    <span class="card-category">${escapeHTML(event.category)}</span>
-                    <span class="seat-badge ${badgeClass}" id="card-badge-${event.id}">
-                        ${badgeIcon} ${badgeText}
-                    </span>
-                </div>
 
-                <div class="card-content">
-                    <h3 class="card-title">${escapeHTML(event.title)}</h3>
-                    <p class="card-desc">${escapeHTML(event.description)}</p>
+<article class="event-card" id="event-card-${event.id}">
+    <div class="card-top">
+        <span class="card-category">${escapeHTML(event.category)}</span>
+        <span class="seat-badge ${badgeClass}" id="card-badge-${event.id}">
+            ${badgeText}
+        </span>
+    </div>
 
-                    <div class="card-meta">
-                        <div class="meta-item">
-                            <span>📅</span>
-                            <span>${formatEventDate(event.event_date)}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span>📍</span>
-                            <span>${escapeHTML(event.venue)}</span>
-                        </div>
-                    </div>
+    <div class="card-content">
+        <h3 class="card-title">${escapeHTML(event.title)}</h3>
+        <p class="card-desc">${escapeHTML(event.description)}</p>
+
+        <div class="card-meta">
+            <div class="meta-item">
+                <span>${formatEventDate(event.event_date)}</span>
+            </div>
+            <div class="meta-item">
+                <span>${escapeHTML(event.venue)}</span>
+            </div>
+        </div>
+
 
                     <!-- Live Capacity Progress Bar -->
                     <div class="capacity-container">
@@ -213,15 +211,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span id="capacity-text-${event.id}">Booked: <strong>${capacity - remaining}</strong> (${percentFilled}%)</span>
                         </div>
                         <div class="capacity-bar">
-                            <div class="capacity-progress ${progressClass}" 
-                                 id="capacity-progress-${event.id}" 
+                            <div class="capacity-progress ${progressClass}"
+                                 id="capacity-progress-${event.id}"
                                  style="width: ${percentFilled}%"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="card-footer">
-                    <button class="btn btn-primary btn-card-action btn-register-trigger" 
+                    <button class="btn btn-primary btn-card-action btn-register-trigger"
                             id="btn-register-${event.id}"
                             data-event-id="${event.id}"
                             ${btnDisabled}>
@@ -311,31 +309,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const capacity = event.capacity;
         const percentFilled = Math.min(100, Math.round(((capacity - newRemainingSeats) / capacity) * 100));
 
-        if (newRemainingSeats <= 0) {
-            badgeElem.className = 'seat-badge badge-full';
-            badgeElem.innerHTML = '🔴 Housefull';
-            progressElem.className = 'capacity-progress progress-red';
-            if (actionBtn) {
-                actionBtn.disabled = true;
-                actionBtn.textContent = 'Sold Out';
-            }
-        } else if (newRemainingSeats <= 5) {
-            badgeElem.className = 'seat-badge badge-warning';
-            badgeElem.innerHTML = `🟠 ${newRemainingSeats} seats left (Filling Fast!)`;
-            progressElem.className = 'capacity-progress progress-orange';
-            if (actionBtn) {
-                actionBtn.disabled = false;
-                actionBtn.textContent = currentUser ? 'Register Pass →' : 'Login to Register →';
-            }
-        } else {
-            badgeElem.className = 'seat-badge badge-available';
-            badgeElem.innerHTML = `🟢 ${newRemainingSeats} seats left`;
-            progressElem.className = 'capacity-progress progress-green';
-            if (actionBtn) {
-                actionBtn.disabled = false;
-                actionBtn.textContent = currentUser ? 'Register Pass →' : 'Login to Register →';
-            }
-        }
+
+if (newRemainingSeats <= 0) {
+    badgeElem.className = 'seat-badge badge-full';
+    badgeElem.textContent = 'House Full';
+    progressElem.className = 'capacity-progress progress-red';
+
+    if (actionBtn) {
+        actionBtn.disabled = true;
+        actionBtn.textContent = 'Sold Out';
+    }
+} else if (newRemainingSeats <= 5) {
+    badgeElem.className = 'seat-badge badge-warning';
+    badgeElem.textContent = `${newRemainingSeats} seats left (Filling Fast!)`;
+    progressElem.className = 'capacity-progress progress-orange';
+
+    if (actionBtn) {
+        actionBtn.disabled = false;
+        actionBtn.textContent = currentUser ? 'Register Pass →' : 'Login to Register →';
+    }
+} else {
+    badgeElem.className = 'seat-badge badge-available';
+    badgeElem.textContent = `${newRemainingSeats} seats left`;
+    progressElem.className = 'capacity-progress progress-green';
+
+    if (actionBtn) {
+        actionBtn.disabled = false;
+        actionBtn.textContent = currentUser ? 'Register Pass →' : 'Login to Register →';
+    }
+}
 
         capacityText.innerHTML = `Booked: <strong>${capacity - newRemainingSeats}</strong> (${percentFilled}%)`;
         progressElem.style.width = `${percentFilled}%`;
@@ -540,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     btn.addEventListener('click', async (e) => {
                         const regId   = parseInt(e.currentTarget.getAttribute('data-reg-id'));
                         const eventId = parseInt(e.currentTarget.getAttribute('data-event-id'));
-                        
+
                         if (confirm('Are you sure you want to cancel this event pass? This seat will immediately become available for other students.')) {
                             await cancelRegistration(regId, eventId);
                         }
@@ -643,15 +645,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        
-        const icons = {
-            success: '✅',
-            warning: '⚠️',
-            error: '❌'
-        };
+
+
+const icons = {
+    success: '',
+    warning: '',
+    error: ''
+};
+
 
         toast.innerHTML = `
-            <span>${icons[type] || 'ℹ️'}</span>
+            <span>${icons[type] || ''}</span>
             <span>${escapeHTML(message)}</span>
         `;
 
