@@ -1,0 +1,8 @@
+# Netscape HTTP Cookie File
+# https://curl.se/docs/http-cookies.html
+#
+# This file is auto-generated when you test API endpoints with tools like cURL.
+# It stores PHP session cookies (PHPSESSID) for local development.
+#
+# This file is in .gitignore — do NOT commit real session data.
+# It will be created automatically when needed.
