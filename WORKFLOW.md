@@ -331,6 +331,12 @@ Admin opens /admin/login.php
          │          Redirect → dashboard.php
          │
          └─ No match → Show "Invalid username or password" error
+
+    Default credentials:
+    ┌────────────┬────────────┐
+    │ Username   │ superAdmin │
+    │ Password   │ admin123   │
+    └────────────┴────────────┘
 ```
 
 ### 3.2 Dashboard & Event Listing
@@ -383,7 +389,11 @@ Admin clicks "+ Add New Event" on dashboard
 Admin clicks "Edit" on an event row
          │
          ▼
-    GET /admin/edit_event.php?id=3 → Fetches event from DB → Renders pre-filled form
+    GET /admin/edit_event.php?id=3
+         │
+         ▼
+    Fetches event from DB → Counts current registrations → Renders pre-filled form
+    (Capacity input min value is set to current registration count)
          │
          ▼
     Admin modifies fields
@@ -391,7 +401,13 @@ Admin clicks "Edit" on an event row
          ▼
     Form POST → edit_event.php handles it:
          │
-         ├─ Validate fields
+         ├─ Validate required fields
+         ├─ Validate capacity is a positive number
+         ├─ Capacity guard:
+         │   COUNT registrations for this event
+         │   └─ New capacity < registered count
+         │      → Error: "Cannot set capacity to X. There are already Y registered student(s)."
+         │
          ├─ UPDATE events SET title=?, category=?, ... WHERE id=?
          └─ Redirect → dashboard.php?success=updated → Green alert shown
 ```
@@ -513,6 +529,7 @@ Admin clicks "Logout" in navbar
 | **Admin Access Control** | Session guard | Every admin page requires `auth_check.php` which redirects unauthenticated users to `login.php`. |
 | **Password Storage** | bcrypt hashing | Admin passwords stored via `password_hash()` (bcrypt), verified with `password_verify()`. |
 | **Credential Protection** | .gitignore | `api/config.php` (SMTP credentials) excluded from version control. Only `config.example.php` is committed. |
+| **Capacity Guard** | Server-side validation | `edit_event.php` prevents admin from reducing event capacity below the number of current registrations. HTML `min` attribute also enforced on the form input. |
 
 ---
 
@@ -571,6 +588,14 @@ Browser                              Server (PHP)
       │                                    │
       │──── POST add_event.php ───────────►│ Validate & INSERT
       │◄─── 302 Redirect dashboard.php ───│ ?success=added
+      │                                    │
+      │──── GET edit_event.php?id=3 ──────►│ Fetch event + registration count
+      │◄─── HTML form (min capacity set) ─│ Pre-fill form
+      │                                    │
+      │──── POST edit_event.php ──────────►│ Validate fields
+      │     {capacity: 5}                  │ Check: capacity >= registered?
+      │                                    │ ├─ Yes → UPDATE & redirect
+      │◄─── 302 or error ────────────────│ └─ No → Show error message
       │                                    │
       │──── GET view_registrations.php ───►│ Query registrations
       │     ?id=3                          │ JOIN users
