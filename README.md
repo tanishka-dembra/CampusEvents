@@ -41,6 +41,7 @@ A modern, responsive, and secure campus event portal built with **Vanilla HTML, 
    - **Add** new events with title, category, date, venue, capacity, and description.
    - **Edit** existing events with pre-filled forms.
    - **Delete** events with a confirmation page (cascades to registrations).
+   - **Capacity validation** — admin cannot reduce event capacity below the number of current registrations.
 
 8. **View Registrations:**
    - See all registered students for any event (name, student ID, email, registration time).
@@ -75,13 +76,13 @@ CampusEvents/
 │   ├── logout.php           # Admin session logout
 │   ├── dashboard.php        # Event management table (View/Add/Edit/Delete)
 │   ├── add_event.php        # Add new event form
-│   ├── edit_event.php       # Edit existing event form
+│   ├── edit_event.php       # Edit existing event form (with capacity guard)
 │   ├── delete_event.php     # Delete event with confirmation
 │   ├── view_registrations.php # View registered students per event
 │   └── admin_style.css      # Admin panel dark-theme stylesheet
 └── database/
     ├── schema.sql           # Database schema & sample events
-    └── admin_table.sql      # Admin table schema
+    └── admin_table.sql      # Admin table schema & default admin user
 ```
 
 ### Relational Database Schema (`campus_events`):
@@ -105,19 +106,27 @@ CampusEvents/
 4. Copy the contents of `database/schema.sql` and click **Go**.
 5. Then copy the contents of `database/admin_table.sql` and click **Go**.
 
+> **Note:** The `admin_table.sql` file creates the admin table and inserts a default admin user. If you need a different password, generate a new bcrypt hash:
+> ```bash
+> php -r "echo password_hash('your-password', PASSWORD_DEFAULT);"
+> ```
+
 ### 3. Deploy to Apache
 Link this repository to your Apache `htdocs` directory:
 ```cmd
 mklink /J "C:\xampp\htdocs\campus-events" "path\to\CampusEvents"
 ```
 
-### 4. Configure Email SMTP (Optional for OTP delivery)
+### 4. Configure Email SMTP (Required for OTP login)
 1. Copy `api/config.example.php` to `api/config.php`.
 2. Add your Google App Password credentials:
    ```php
-   define('SMTP_USER', 'your-email@campus.edu');
+   define('SMTP_USER', 'your-email@gmail.com');
    define('SMTP_PASS', 'your-16-char-app-password');
    ```
+3. To generate an App Password, enable 2FA on your Google account and visit [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
+
+> **Note:** `api/config.php` is listed in `.gitignore` and will not be committed. See `api/config.example.php` for the template.
 
 ### 5. Run the Application
 Open your browser and navigate to:
@@ -134,7 +143,7 @@ Default admin credentials:
 
 | Username | Password |
 |---|---|
-| `admin` | `admin123` |
+| `superAdmin` | `admin123` |
 
 ---
 
@@ -143,6 +152,7 @@ Default admin credentials:
 * **XSS Prevention:** Output sanitization on dynamic HTML rendering.
 * **Credential Protection:** Private keys and passwords stored in `api/config.php` and excluded via `.gitignore`.
 * **Admin Passwords:** Stored as bcrypt hashes using PHP's `password_hash()` / `password_verify()`.
+* **Capacity Guard:** Admin cannot reduce event capacity below the number of existing registrations.
 
 ---
 

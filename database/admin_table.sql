@@ -18,5 +18,5 @@ CREATE TABLE IF NOT EXISTS admins (
 
 INSERT INTO admins (username, password_hash) VALUES (
     'superAdmin',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
+    '$2y$12$g1tJGp8escM5N2.8T9UkROzlKDW22tcdikwBiM8cITVVwI0r3Et16'
 );
