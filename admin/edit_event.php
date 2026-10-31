@@ -20,6 +20,11 @@ if (!$event) {
     exit;
 }
 
+// Get current registration count for this event
+$regStmt = $pdo->prepare("SELECT COUNT(*) FROM registrations WHERE event_id = ?");
+$regStmt->execute([$eventId]);
+$currentRegistrations = (int) $regStmt->fetchColumn();
+
 // Use event data as default form values
 $formData = [
     'title'        => $event['title'],
@@ -58,6 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         (int) $formData['capacity'] < 1
     ) {
         $error = 'Capacity must be a positive number.';
+    } elseif ((int) $formData['capacity'] < $currentRegistrations) {
+        $error = "Cannot set capacity to {$formData['capacity']}. There are already {$currentRegistrations} registered student(s).";
     } else {
         // Update event in the database
         $stmt = $pdo->prepare("
@@ -327,14 +334,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             id="capacity"
                             name="capacity"
                             placeholder="Maximum participants"
-                            min="1"
+                            min="<?= $currentRegistrations > 0 ? $currentRegistrations : 1 ?>"
                             step="1"
                             required
                             value="<?= htmlspecialchars($formData['capacity']) ?>"
                         >
 
                         <p class="field-hint">
-                            Maximum number of participants allowed.
+                            <?php if ($currentRegistrations > 0): ?>
+                                Minimum <?= $currentRegistrations ?> (<?= $currentRegistrations ?> student(s) already registered).
+                            <?php else: ?>
+                                Maximum number of participants allowed.
+                            <?php endif; ?>
                         </p>
                     </div>
 
