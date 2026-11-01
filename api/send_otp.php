@@ -1,15 +1,13 @@
 <?php
 // ========================================================
-// api/send_otp.php - Generate, store & dispatch real email OTP
+// api/send_otp.php - Generate and dispatch 6-digit email OTP
+// Reference: Lab 8 (JSON POST), Lab 9 (PHP random & variables), Extra Lab (INSERT)
 // ========================================================
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/mailer.php';
 
 header('Content-Type: application/json; charset=UTF-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -17,7 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+// Read email from JSON POST request (Lab 8 Manual, Section 5)
+$input = json_decode(file_get_contents('php://input'), true) ?? [];
 $email = isset($input['email']) ? trim($input['email']) : '';
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -27,39 +26,35 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 try {
-    // 1. Generate a cryptographically secure 6-digit numeric OTP
-    $otpCode = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+    // 1. Generate a 6-digit OTP code using standard PHP rand()
+    $otpCode = (string)rand(100000, 999999);
 
-    // 2. Invalidate any existing unused OTPs for this email
-    $invalidateStmt = $pdo->prepare("UPDATE email_otps SET is_used = 1 WHERE LOWER(email) = LOWER(?) AND is_used = 0");
-    $invalidateStmt->execute([$email]);
+    // 2. Mark any previously sent unused OTPs as used
+    $invalidateStmt = $pdo->prepare("UPDATE email_otps SET is_used = 1 WHERE email = :email AND is_used = 0");
+    $invalidateStmt->execute([':email' => $email]);
 
-    // 3. Insert new OTP record using MySQL internal clock (valid for 10 minutes)
+    // 3. Insert new OTP with 10-minute expiry (Extra Lab Manual, Section 5)
     $insertStmt = $pdo->prepare("
         INSERT INTO email_otps (email, otp_code, expires_at, is_used)
-        VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0)
+        VALUES (:email, :otp, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0)
     ");
-    $insertStmt->execute([$email, $otpCode]);
+    $insertStmt->execute([':email' => $email, ':otp' => $otpCode]);
 
-    // 4. Dispatch real email via Google SMTP (IIT ISM institutional account)
+    // 4. Send the verification email using Google SMTP
     $mailResult = sendOtpEmail($email, $otpCode);
 
     if ($mailResult['success']) {
         echo json_encode([
-            'success'    => true,
-            'message'    => "Verification code sent to $email! Please check your inbox (and Spam folder).",
-            'expires_in' => '10 minutes',
-            'mail_sent'  => true
+            'success' => true,
+            'message' => "Verification code sent to $email! Please check your inbox (and Spam folder)."
         ], JSON_PRETTY_PRINT);
     } else {
         http_response_code(500);
         echo json_encode([
-            'success'    => false,
-            'message'    => "Failed to deliver verification email: " . $mailResult['error'],
-            'mail_sent'  => false
+            'success' => false,
+            'message' => "Failed to deliver verification email: " . $mailResult['error']
         ], JSON_PRETTY_PRINT);
     }
-
 
 } catch (PDOException $e) {
     http_response_code(500);
