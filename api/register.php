@@ -1,19 +1,14 @@
 <?php
 // ========================================================
-// api/register.php - Authenticated Event Registration
-// Uses secure PHP Session ($_SESSION['user_id']) & row lock
+// api/register.php - Event Registration
+// Reference: Lab 8 (JSON POST), Lab 10 (Sessions), Extra Lab (INSERT & 1062 Duplicate Check)
 // ========================================================
 
 require_once __DIR__ . '/db.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 
 header('Content-Type: application/json; charset=UTF-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -21,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 1. Verify that the student is authenticated
+// 1. Verify that student is authenticated (Lab 10 Manual, Section 6.2)
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode([
@@ -32,8 +27,8 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$userId = (int)$_SESSION['user_id'];
-$input  = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+$userId  = $_SESSION['user_id'];
+$input   = json_decode(file_get_contents('php://input'), true) ?? [];
 $eventId = isset($input['event_id']) ? (int)$input['event_id'] : 0;
 
 if ($eventId <= 0) {
@@ -43,15 +38,11 @@ if ($eventId <= 0) {
 }
 
 try {
-    // 2. Start Atomic Database Transaction
-    $pdo->beginTransaction();
-
-    // 3. Duplicate Registration Check: Has this user registered for this event already?
-    $dupStmt = $pdo->prepare("SELECT id FROM registrations WHERE event_id = ? AND user_id = ?");
-    $dupStmt->execute([$eventId, $userId]);
+    // 2. Check for duplicate registration before inserting
+    $dupStmt = $pdo->prepare("SELECT id FROM registrations WHERE event_id = :eid AND user_id = :uid");
+    $dupStmt->execute([':eid' => $eventId, ':uid' => $userId]);
     if ($dupStmt->fetch()) {
-        $pdo->rollBack();
-        http_response_code(409); // Conflict
+        http_response_code(409); // Conflict status for duplicate
         echo json_encode([
             'success' => false,
             'message' => 'You are already registered for this event!'
@@ -59,7 +50,7 @@ try {
         exit;
     }
 
-    // 4. Over-Capacity Check with Row-Level Locking (FOR UPDATE)
+    // 3. Check live capacity and calculate remaining seats (Extra Lab Manual, Section 3.1)
     $capStmt = $pdo->prepare("
         SELECT 
             e.title,
@@ -67,15 +58,13 @@ try {
             COUNT(r.id) AS registered_count
         FROM events e
         LEFT JOIN registrations r ON e.id = r.event_id
-        WHERE e.id = ?
+        WHERE e.id = :eid
         GROUP BY e.id
-        FOR UPDATE
     ");
-    $capStmt->execute([$eventId]);
+    $capStmt->execute([':eid' => $eventId]);
     $event = $capStmt->fetch();
 
     if (!$event) {
-        $pdo->rollBack();
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Event not found.']);
         exit;
@@ -86,7 +75,6 @@ try {
     $remaining  = $capacity - $registered;
 
     if ($remaining <= 0) {
-        $pdo->rollBack();
         http_response_code(400);
         echo json_encode([
             'success' => false,
@@ -95,13 +83,10 @@ try {
         exit;
     }
 
-    // 5. Insert New Registration Record linking (event_id, user_id)
-    $insertStmt = $pdo->prepare("INSERT INTO registrations (event_id, user_id) VALUES (?, ?)");
-    $insertStmt->execute([$eventId, $userId]);
+    // 4. Insert registration record (Extra Lab Manual, Section 7.2)
+    $insertStmt = $pdo->prepare("INSERT INTO registrations (event_id, user_id) VALUES (:eid, :uid)");
+    $insertStmt->execute([':eid' => $eventId, ':uid' => $userId]);
     $registrationId = (int)$pdo->lastInsertId();
-
-    // 6. Commit Transaction (Locks released, data safely written)
-    $pdo->commit();
 
     echo json_encode([
         'success'         => true,
@@ -113,11 +98,8 @@ try {
     ], JSON_PRETTY_PRINT);
 
 } catch (PDOException $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
-
-    if ($e->getCode() == 23000) {
+    // Check MariaDB duplicate key error code 1062 (Extra Lab Manual, Section 7.2)
+    if (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062) {
         http_response_code(409);
         echo json_encode([
             'success' => false,

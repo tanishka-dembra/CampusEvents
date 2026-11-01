@@ -1,26 +1,16 @@
 <?php
 // ========================================================
 // api/logout.php - Terminate student session
+// Reference: Lab 10 Manual (Section 6.3 & 7.6 - End the Session)
 // ========================================================
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 
-$_SESSION = [];
-
-if (ini_get("session.use_cookies")) {
-    $params = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000,
-        $params["path"], $params["domain"],
-        $params["secure"], $params["httponly"]
-    );
-}
-
+// Clear all session variables and destroy session
+session_unset();
 session_destroy();
 
 header('Content-Type: application/json; charset=UTF-8');
-header('Access-Control-Allow-Origin: *');
 
 echo json_encode([
     'success' => true,

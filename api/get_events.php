@@ -1,19 +1,19 @@
 <?php
 // ========================================================
-// api/get_events.php - Fetch all events with live remaining seats
+// api/get_events.php - Fetch all events with live seat count
+// Reference: Lab 8 Manual (JSON exchange) & Extra Lab Manual (JOIN, query, fetchAll)
 // ========================================================
 
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json; charset=UTF-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET');
 
 try {
-    // Optional category filter: ?category=Tech
+    // Read optional category filter from GET query string (Lab 10 Manual, Section 3)
     $category = isset($_GET['category']) ? trim($_GET['category']) : '';
-    
-    // SQL query dynamically calculating: remaining_seats = capacity - COUNT(registrations)
+
+    // Calculate remaining seats: capacity - COUNT(registrations)
+    // Reference: Extra Lab Manual Section 3.1 (Combining Tables with JOIN)
     $sql = "
         SELECT 
             e.id,
@@ -30,33 +30,26 @@ try {
         LEFT JOIN registrations r ON e.id = r.event_id
     ";
 
-    $params = [];
+    // If category is provided and not 'all', filter with prepared statement
     if (!empty($category) && strtolower($category) !== 'all') {
-        $sql .= " WHERE LOWER(e.category) = LOWER(?) ";
-        $params[] = $category;
+        $sql .= " WHERE e.category = :category GROUP BY e.id ORDER BY e.event_date ASC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':category' => $category]);
+    } else {
+        $sql .= " GROUP BY e.id ORDER BY e.event_date ASC";
+        $stmt = $pdo->query($sql);
     }
 
-    $sql .= " GROUP BY e.id ORDER BY e.event_date ASC";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
     $events = $stmt->fetchAll();
 
-    // Type cast numeric values for clean JSON output
-    foreach ($events as &$event) {
-        $event['id']               = (int)$event['id'];
-        $event['capacity']         = (int)$event['capacity'];
-        $event['registered_count'] = (int)$event['registered_count'];
-        $event['remaining_seats']  = (int)$event['remaining_seats'];
-    }
-
+    // Send JSON response to browser (Lab 8 Manual, Section 2)
     echo json_encode([
         'success' => true,
         'count'   => count($events),
         'events'  => $events
     ], JSON_PRETTY_PRINT);
 
-} catch (Exception $e) {
+} catch (PDOException $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,

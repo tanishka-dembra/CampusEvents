@@ -1,19 +1,14 @@
 <?php
 // ========================================================
 // api/cancel.php - Securely Cancel Registration
-// Only permits the authenticated student to cancel their own pass
+// Reference: Lab 8 Manual (JSON POST), Lab 10 (Sessions), Extra Lab (DELETE query)
 // ========================================================
 
 require_once __DIR__ . '/db.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 
 header('Content-Type: application/json; charset=UTF-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -21,15 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 1. Must be authenticated
+// 1. Verify that student is authenticated (Lab 10 Manual, Section 6.2)
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized. Please login first.']);
     exit;
 }
 
-$userId = (int)$_SESSION['user_id'];
-$input  = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+$userId = $_SESSION['user_id'];
+$input  = json_decode(file_get_contents('php://input'), true) ?? [];
 $regId  = isset($input['registration_id']) ? (int)$input['registration_id'] : 0;
 
 if ($regId <= 0) {
@@ -39,14 +34,14 @@ if ($regId <= 0) {
 }
 
 try {
-    // 2. Strict Check: Does this registration belong to THIS logged-in user?
+    // 2. Check ownership: Does this pass belong to the logged-in student?
     $checkStmt = $pdo->prepare("
         SELECT r.id, r.event_id, e.title 
         FROM registrations r
         JOIN events e ON r.event_id = e.id
-        WHERE r.id = ? AND r.user_id = ?
+        WHERE r.id = :id AND r.user_id = :uid
     ");
-    $checkStmt->execute([$regId, $userId]);
+    $checkStmt->execute([':id' => $regId, ':uid' => $userId]);
     $registration = $checkStmt->fetch();
 
     if (!$registration) {
@@ -60,19 +55,19 @@ try {
 
     $eventId = (int)$registration['event_id'];
 
-    // 3. Delete the registration record (frees up the seat!)
-    $deleteStmt = $pdo->prepare("DELETE FROM registrations WHERE id = ? AND user_id = ?");
-    $deleteStmt->execute([$regId, $userId]);
+    // 3. Delete the registration to free up the seat (Extra Lab Manual, Section 3)
+    $deleteStmt = $pdo->prepare("DELETE FROM registrations WHERE id = :id AND user_id = :uid");
+    $deleteStmt->execute([':id' => $regId, ':uid' => $userId]);
 
-    // 4. Query the newly incremented remaining seats
+    // 4. Calculate newly updated remaining seats
     $countStmt = $pdo->prepare("
         SELECT (e.capacity - COUNT(r.id)) AS remaining_seats
         FROM events e
         LEFT JOIN registrations r ON e.id = r.event_id
-        WHERE e.id = ?
+        WHERE e.id = :eid
         GROUP BY e.id
     ");
-    $countStmt->execute([$eventId]);
+    $countStmt->execute([':eid' => $eventId]);
     $newRemaining = (int)$countStmt->fetchColumn();
 
     echo json_encode([
