@@ -952,6 +952,19 @@ body {
     gap: 0.8rem;
 }
 
+/* Navigation Actions - Student and Admin Buttons */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.nav-actions > a {
+    white-space: nowrap;
+}
+
 .user-greeting {
     display: flex;
     align-items: center;
