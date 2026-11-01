@@ -27,27 +27,38 @@
             <span class="brand-text">Campus<span class="gradient-text">Events</span></span>
         </a>
 
-        <div class="nav-actions" id="nav-actions">
-            <!-- Logged Out View -->
-            <div id="nav-guest-view" class="nav-auth-group">
-                <button id="btn-open-login" class="btn btn-primary">
-                    Student Login / Sign Up
-                </button>
-            </div>
+        
+<div class="nav-actions" id="nav-actions">
 
-            <!-- Logged In View -->
-            <div id="nav-user-view" class="nav-auth-group hidden">
-                <div class="user-greeting">
-                    <span id="user-display-name" class="user-name">Student</span>
-                </div>
-                <button id="btn-open-my-bookings" class="btn btn-secondary">
-                    My Bookings
-                </button>
-                <button id="btn-logout" class="btn btn-outline" title="Logout">
-                    Logout
-                </button>
-            </div>
+    <!-- Logged Out View -->
+    <div id="nav-guest-view" class="nav-auth-group">
+        <button id="btn-open-login" class="btn btn-primary">
+            Student Login / Sign Up
+        </button>
+    </div>
+
+    <!-- Logged In View -->
+    <div id="nav-user-view" class="nav-auth-group hidden">
+        <div class="user-greeting">
+            <span id="user-display-name" class="user-name">Student</span>
         </div>
+
+        <button id="btn-open-my-bookings" class="btn btn-secondary">
+            My Bookings
+        </button>
+
+        <button id="btn-logout" class="btn btn-outline" title="Logout">
+            Logout
+        </button>
+    </div>
+
+    <!-- Admin Login -->
+    <a href="admin/login.php" class="btn btn-secondary">
+        Admin Login
+    </a>
+
+</div>
+
     </div>
 </header>
 
